@@ -5,7 +5,6 @@ void lolka(){
     printf("%d\n", tess);
     tess++;
 }
-
 int main() {
     int x = 28;
     int *p;
