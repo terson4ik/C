@@ -37,12 +37,18 @@ char *remove_spices(char *str)
 
 int count_spaces(const char *str)
 {
-    int i, j;
-    for(j = i = 0; str[i]; i++) {
-        if(*(str + i) == ' ')
-            ++j;
+    if(!*str) return 0;
+    return (*str == ' ') + count_spaces(str + 1);
+    /*
+    switch(*str) {
+        case 0:
+            return 0;
+        case ' ':
+            return 1 + count_spaces(++str);
+        default:
+            return 0 + count_spaces(++str);
     }
-    return j;
+    */
 }
 
 int main(int argc, char **argv)
