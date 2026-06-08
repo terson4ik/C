@@ -17,7 +17,7 @@ int main()
             ++size;
             putchar(c);
         }
-        if(size == TAB_SIZE)
+        if(size == TAB_SIZE || c == '\n')
             size = 0;
     }
 }
