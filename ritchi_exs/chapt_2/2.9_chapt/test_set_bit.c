@@ -1,0 +1,22 @@
+#include <stdio.h>
+#include "bits.h"
+#include "a_to_i.h"
+
+
+#define TARG_N 4 + 1 /* +1 = ./prog */
+int main(int argc, char **argv)
+{
+    u_64 x, p, n, y;
+    if (argc < TARG_N) {
+        fprintf(stderr, "FATAL ERROR: too few arguments");
+        return 1;
+    }
+    x = a_to_i(argv[1]);
+    p = a_to_i(argv[2]);
+    n = a_to_i(argv[3]);
+    y = a_to_i(argv[4]);
+    print_bits(x);
+    print_bits(y);
+    print_bits(setbits(x, p, n, y));
+    return 0;
+}

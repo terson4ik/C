@@ -1,0 +1,2 @@
+#!/bin/bash
+rm -rfv bits.o a_to_i.o print get set invert rotate

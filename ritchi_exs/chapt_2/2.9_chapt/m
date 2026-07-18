@@ -1,0 +1,9 @@
+#!/bin/bash
+
+gcc -Wall -c -g bits.c
+gcc -Wall -c -g a_to_i.c
+gcc -Wall -g test_print.c bits.o a_to_i.o -o print
+gcc -Wall -g test_get_bit.c bits.o a_to_i.o -o get
+gcc -Wall -g test_set_bit.c bits.o a_to_i.o -o set
+gcc -Wall -g test_invert.c bits.o a_to_i.o -o invert
+gcc -Wall -g test_rotate.c bits.o a_to_i.o -o rotate
