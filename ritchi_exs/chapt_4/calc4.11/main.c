@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "getch.h"
 #include "getop.h"
 #include "stack.h"
 
