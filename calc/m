@@ -1,4 +1,0 @@
-#!/bin/bash
-
-gcc -g -c getch.c getop.c stack.c  check_word.c my_string.c
-gcc -g main.c stack.o getch.o getop.o check_word.o my_string.o -lm -o cacl

@@ -4,12 +4,9 @@
 #include "getch.h"
 #include "check_word.h"
 
-#define CMD_LINE_SIZE   100
-
 int get_op(char s[])
 {
     int c, i; /* need `c` to catch EOF */
-    char cmd_line[CMD_LINE_SIZE];
 
     s[0] = c = get_not_space();
     s[1] = '\0';
@@ -22,8 +19,7 @@ int get_op(char s[])
                 while (isalpha(s[++i] = c = getch()))
                     ;
                 s[i] = '\0';
-                if (c != EOF)
-                    ungetch(c);
+                ungetch(c);
                 return check_word(s);
             } else { /* after checking, it's a variable */
                 ungetch(c);
@@ -48,8 +44,7 @@ int get_op(char s[])
         while (isdigit(s[++i] = c = getch()))
             ;
     s[i] = '\0';
-    if (c != EOF)
-        ungetch(c);
+    ungetch(c);
 
     return NUMBER;
 }

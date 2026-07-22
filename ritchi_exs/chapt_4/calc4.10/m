@@ -1,0 +1,7 @@
+#!/bin/bash
+
+#gcc -Wall -g -c getch.c getop.c stack.c  check_word.c my_string.c
+gcc -Wall -g -c getch.c modern_getop.c get_line.c stack.c  check_word.c my_string.c
+
+#gcc -Wall -g main.c stack.o getch.o getop.o check_word.o my_string.o -lm -o calc
+gcc -Wall -g main.c stack.o getch.o modern_getop.o get_line.o check_word.o my_string.o -lm -o calc
