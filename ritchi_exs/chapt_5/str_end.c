@@ -36,7 +36,7 @@ int str_end(const char *orig, const char *template)
 }
 void print_true(int expr)
 {
-    printf("%s, it's true\n", (expr) ? "yes" : "no");
+    printf("%s, it's %s.\n", (expr) ? "Yes" : "No", (expr) ? "true" : "fake");
 }
 
 
