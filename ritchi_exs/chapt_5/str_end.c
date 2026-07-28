@@ -36,10 +36,7 @@ int str_end(const char *orig, const char *template)
 }
 void print_true(int expr)
 {
-    if (expr)
-        puts("yes, it's true");
-    else
-        puts("no, it's fake");
+    printf("%s, it's true\n", (expr) ? "yes" : "no");
 }
 
 
