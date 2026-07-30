@@ -1,0 +1,6 @@
+#!/bin/bash
+
+gcc -Wall -g -c get_line.c mstring.c iovector.c
+gcc -Wall -g main.c get_line.o mstring.o iovector.o
+
+rm -f *~ *.o
