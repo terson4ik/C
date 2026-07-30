@@ -1,0 +1,5 @@
+#/bin/bash
+
+gcc -Wall -g -c other.c getop.c
+gcc -Wall -g main.c other.o getop.c
+rm -f *.o *~
