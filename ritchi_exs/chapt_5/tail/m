@@ -1,0 +1,6 @@
+#!/bin/bash
+
+gcc -Wall -g -c alloc.c my_stdlib.c my_string.c 
+gcc -Wall -g tail.c alloc.o my_stdlib.o my_string.o
+
+rm -f *.o
