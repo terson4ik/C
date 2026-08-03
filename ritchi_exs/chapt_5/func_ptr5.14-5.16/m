@@ -1,0 +1,6 @@
+#!/bin/bash
+
+gcc -Wall -g -c alloc.c  inp_out.c my_string.c  quic_sort.c
+gcc -Wall -g main.c alloc.o  inp_out.o my_string.o  quic_sort.o
+
+rm -f *.o
