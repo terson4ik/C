@@ -1,0 +1,7 @@
+#!/bin/bash
+
+gcc -Wall -g -c dcl.c getch.c main.c mstring.c undcl.c
+gcc -Wall -g dcl.o getch.o main.o mstring.o -o dcl
+gcc -Wall -g dcl.o getch.o undcl.o mstring.o -o undcl
+
+rm -f *.o
