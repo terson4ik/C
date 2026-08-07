@@ -1,0 +1,5 @@
+#!/bin/bash
+
+gcc -Wall -g -c getch.c main.c m_io.c m_sort.c mstring.c
+gcc -Wall -g getch.o main.o m_io.o m_sort.o mstring.o
+rm -f *.o
