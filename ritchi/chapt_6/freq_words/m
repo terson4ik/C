@@ -1,0 +1,7 @@
+#!/bin/bash
+
+gcc -Wall -g -c getch.c getw.c main.c tree.c strs.c
+
+gcc getch.o getw.o main.o tree.o strs.c
+
+rm -f *.o
