@@ -1,0 +1,7 @@
+#!/bin/bash
+
+clang -Wall -g -c main.c other.c strs.c tree.c
+
+clang -g main.c other.c strs.c tree.c
+
+rm -f *.o
