@@ -1,0 +1,6 @@
+#!/bin/bash
+
+gcc -Wall -g -c main.c other.c strs.c tree.c
+gcc -g main.o other.o strs.o tree.o
+
+rm -f *.o
