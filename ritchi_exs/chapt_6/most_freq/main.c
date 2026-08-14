@@ -24,7 +24,6 @@ int main()
     arr = malloc(size_arr * sizeof(*arr));
     convert_tree_to_arr(root, arr);
     quick_sort(arr, 0, size_arr, UP);
-    shell_sort(arr, size_arr, DOWN);
     print_word_arr(arr, size_arr);
 
     tree_word_erase(root);
