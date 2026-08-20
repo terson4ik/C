@@ -27,7 +27,7 @@ int get_c(void)
         n = read(0, buf, sizeof buf);
         pbuf = buf;
     }
-    return (--n >= 0) ? *pbuf++ : EOF;
+    return (n-- > 0) ? (unsigned char) *pbuf++ : EOF;
 }
 
 static char pr_buf[BUFSIZ];
@@ -35,10 +35,9 @@ static char *pr_ptr = pr_buf;
 
 void put_c(int c)
 {
-    if (pr_ptr < pr_buf + BUFSIZ)
-        *pr_ptr++ = c;
-    else
+    if (pr_ptr >= pr_buf + BUFSIZ)
         flush_c();   
+    *pr_ptr++ = c;
 }
 
 void flush_c(void)
