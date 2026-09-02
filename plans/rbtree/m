@@ -1,0 +1,6 @@
+#!/bin/bash
+
+gcc -Wall -g -c rb_tree.c
+gcc -Wall -g main.c rb_tree.o
+
+rm -f *.o

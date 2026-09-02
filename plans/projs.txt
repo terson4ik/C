@@ -1,0 +1,9 @@
+GAMES:
+1)snake
+2)tetris
+3)fallout terms
+
+RITCHI:
+1)dcl
+2)dirs
+3)malloc+free
