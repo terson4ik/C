@@ -1,0 +1,36 @@
+#include <curses.h>
+#include <unistd.h>
+
+    initscr(); -- inits lib ncurs
+    getmaxyx(stdscr, row, col);	 give y and x
+    move(row/2, (col- sizeof(msg))/2); set cursor to givved y and x
+    addstr(msg); write str
+    addchr('*'); write one char
+    curs_set(0); disable cursor(not visible)
+    refresh();	 update screen(before it all saved in buffer);
+    sleep(duration_t); func in unistd, stop 1 s
+    endwin(); -- end ncurses works
+    return 0;
+
+	cbreak() use for handling ctr-C and ctr-D
+	raw() don't handling, and ctr+C equal 3
+
+    to disable is non canonic modes uses:
+    nocbreak() and noraw()
+	
+    use noecho() to disable chars(if you type "HI", it's non will printed)
+    use echo() to return visible buffer
+    keypad(stdscr, 1) for handling keys(UP, LEFT, etc);
+    to disable this, call keypad(stdscr, 0)
+    for get next char use getch();
+    use constants KEY_UP, KEY_DOWN and other
+    for F1 F2.... use KEY_F(1) .....KEY_F(11);
+    if type enter or backspace then result will be differt:
+    returned '\n' or KEY_ENTER
+    and '\b' or KEY_BACKSPACE
+    insert is KEY_IC
+    PgUp -- KEY_PPAGE
+    PgDn -- KEY_NPAGE
+    if screen size will edited, then getch returned KEY_RESIZE
+    use funt start_color() to enable some things with color of chars
+
