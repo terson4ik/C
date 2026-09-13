@@ -11,5 +11,6 @@ void rebuild_game(point *game_field, int size);
 void update_stats(point *game_field, int size);
 void end_game(point *game_field, int size, int is_win);
 void init_my_pairs();
+void draw_char(point *pnt, char c, int pair);
 
 #endif

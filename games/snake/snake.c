@@ -1,7 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
-#include <curses.h>
 #include "snake.h"
 
 struct segment_of_snake_tag {
@@ -16,40 +14,24 @@ struct snake_tag {
 };
  /* typedef defined in header file */
 
-void snake_init(snake **s, int init_size, point *game_field)
+int snake_init(snake **s, point *game_field)
 {
     segment_snake *head;
     *s = malloc(sizeof(**s));
     head = malloc(sizeof(*head));
-    if (!*s || !head) {
-        endwin();
-        perror("snake_init");
-        exit(200);
-    }
-    srand(time(NULL));
+    if (!*s || !head)
+        return ERROR;
+
     (*s)->side = (rand() + 1) % 4;
     (*s)->length = 1;
     head->cur_p.x = game_field->x / 2;
     head->cur_p.y = game_field->y / 2;
     head->next = head->prev = (*s)->head = (*s)->tail = head;
-
-    if (has_colors())
-        attrset(COLOR_PAIR(HEAD_PAIR));
-    mvaddch((*s)->head->cur_p.y, (*s)->head->cur_p.x, CHR_SN_HEAD);
-    if (has_colors())
-        attrset(COLOR_PAIR(BODY_PAIR));
-    while (--init_size > 0) {
-        snake_lengthen(*s, game_field);
-        mvaddch((*s)->tail->cur_p.y, (*s)->tail->cur_p.x, CHR_SN_BODY);
-    }
+    return 0;
 }
 
-void snake_move(snake *s) 
+int snake_move(snake *s) 
 {
-    if (has_colors())
-        attrset(COLOR_PAIR(BG_PAIR));
-    mvaddch(s->tail->cur_p.y, s->tail->cur_p.x, CHR_EMPTY);
-
     s->tail->cur_p = s->head->cur_p;
     s->head = s->tail;
     s->tail = s->head->prev;
@@ -60,28 +42,17 @@ void snake_move(snake *s)
     case LEFT:  s->head->cur_p.x--; break;
     case RIGHT: s->head->cur_p.x++; break;
     default:
-        endwin();
-        fputs("snake_move: no such case, fatal error\n", stderr);
-        exit(200);
+        return ERROR;
     }
-    if (has_colors())
-        attrset(COLOR_PAIR(BODY_PAIR));
-    if (s->head->next != NULL)
-        mvaddch(s->head->next->cur_p.y, s->head->next->cur_p.x, CHR_SN_BODY);
-    if (has_colors())
-        attrset(COLOR_PAIR(HEAD_PAIR));
-    mvaddch(s->head->cur_p.y, s->head->cur_p.x, CHR_SN_HEAD);
-    refresh();
+    return 0;
 }
 
-void handle_resize(snake *s, point *game_field)
+int handle_resize(snake *s, point *game_field)
 {
-    if (snake_check_hit(game_field, s->head)) {
-        endwin();
-        fputs("Shit! You killed snake because small screen absorbed his"
-            " body and she die :((\n", stderr);
-        exit(1);
-    }
+    if (snake_check_hit(game_field, s->head))
+        return ERROR;
+    else
+        return 0;
 }
 
 int  snake_check_hit(const point *head, const segment_snake *next) 
@@ -101,10 +72,6 @@ void snake_spawn_apple(const snake *s, point *app, point *game_field)
         app->x = (rand() % (game_field->x-2)) + 1;
         app->y = (rand() % (game_field->y-2)) + 1;
     } while (snake_check_hit(app, s->head->next));
-    if (has_colors())
-        attrset(COLOR_PAIR(APPLE_PAIR));
-    mvaddch(app->y, app->x, CHR_APPLE);
-    refresh();
 }
 
 int snake_check_bounds(const snake *h, point *game_field) 
@@ -112,7 +79,8 @@ int snake_check_bounds(const snake *h, point *game_field)
     return h->head->cur_p.x < 1 || h->head->cur_p.x >= game_field->x-1
         || h->head->cur_p.y < 1 || h->head->cur_p.y >= game_field->y-1;
 }
-void snake_change_side(snake *s, enum sides new_side)
+
+int snake_change_side(snake *s, enum sides new_side)
 {
     switch (new_side) {
     case UP:    if (s->side != DOWN)  s->side = UP;    break;
@@ -120,20 +88,16 @@ void snake_change_side(snake *s, enum sides new_side)
     case LEFT:  if (s->side != RIGHT) s->side = LEFT;  break;
     case RIGHT: if (s->side != LEFT)  s->side = RIGHT; break;
     default:
-        endwin();
-        fputs("snake_change_side: no such case, fatal error\n", stderr);
-        exit(200);
+        return ERROR;
     }
+    return 0;
 }
 
-void snake_lengthen(snake *s, point *game_field)
+int snake_lengthen(snake *s, point *game_field)
 {
     segment_snake *new_segm = malloc(sizeof(*new_segm));
-    if (!new_segm) {
-        endwin();
-        perror("snake_lengthen");
-        exit(200);
-    }
+    if (!new_segm)
+        return ERROR;
 
     switch (s->side) {
     case UP:
@@ -153,17 +117,12 @@ void snake_lengthen(snake *s, point *game_field)
         new_segm->cur_p.y = s->tail->cur_p.y;
         break;
     default:
-        endwin();
-        fputs("snake_lengthen: no such case, fatal error\n", stderr);
-        exit(200);
+        return ERROR;
     }
 
     if (new_segm->cur_p.x < 0 || new_segm->cur_p.x >= game_field->x ||
-        new_segm->cur_p.y < 0 || new_segm->cur_p.y >= game_field->y) {
-        endwin();
-        fputs("snake_lengthen: impossible increment\n", stderr);
-        exit(200);
-    }
+        new_segm->cur_p.y < 0 || new_segm->cur_p.y >= game_field->y)
+        return ERROR;
 
     s->length++;
     new_segm->next = s->head;
@@ -171,6 +130,7 @@ void snake_lengthen(snake *s, point *game_field)
     s->tail->next = new_segm;
     s->tail = new_segm;
     s->head->prev = s->tail;
+    return 0;
 }
 
 int snake_is_win(const snake *s, point *game_field)
@@ -181,6 +141,11 @@ int snake_is_win(const snake *s, point *game_field)
 point *get_head_point(const snake *s)
 {
     return &s->head->cur_p;
+}
+
+point *get_tail_point(const snake *s)
+{
+    return &s->tail->cur_p;
 }
 
 segment_snake *get_head_segm(const snake *s)

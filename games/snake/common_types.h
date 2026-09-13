@@ -8,14 +8,17 @@
 #  define KEY_ENTER '\n'
 #endif
 
-#define INIT_SIZE   (1 + 3) /* head + 3 body */
+#define INIT_SIZE   (3) /* body */
 
 #define CHR_SN_HEAD '@'
 #define CHR_SN_BODY 'o'
 #define CHR_APPLE   '&'
 #define CHR_EMPTY   ' '
+
 #define RECORD_FILE_NAME ".records.txt"
 
+#define ERROR_CODE 1
+#define ERROR -1
 #define MIN_SIZE_WINDOW 15
 
 enum pairs { COMMON_PAIR = 0, BORDER_PAIR, BG_PAIR,

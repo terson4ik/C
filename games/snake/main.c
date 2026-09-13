@@ -1,6 +1,8 @@
 /* snake: support modern and legacy terminals, check common_types.h to
  * override ENTER */
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include <curses.h>
 #include "common_types.h"
 #include "snake.h"
@@ -16,7 +18,7 @@ int main(void)
     /* game init */
     snake *snake_head; /* AUTO_INIT, NULL not needed */
     point apple, game_field;
-    int key, delay_time;
+    int key, delay_time, i;
 
     initscr();
     start_color();
@@ -26,27 +28,40 @@ int main(void)
     noecho();
     curs_set(0);
     keypad(stdscr, 1);
+    srand(time(NULL));
 
     getmaxyx(stdscr, game_field.y, game_field.x);
     if (game_field.y < MIN_SIZE_WINDOW || game_field.x < MIN_SIZE_WINDOW) {
         endwin();
         fprintf(stderr, "Too small window. set %d+ size\n", MIN_SIZE_WINDOW);
-        return 1;
+        return ERROR_CODE;
     }
 
-    switch (start_game(&game_field, INIT_SIZE)) {
+    switch (start_game(&game_field, INIT_SIZE+1)) {
     case easy:   delay_time = DELAY_TIME_EASY; break;
     case normal: delay_time = DELAY_TIME_NORM; break;
     case hard:   delay_time = DELAY_TIME_HARD; break;
     default:
         endwin();
         fputs("main: unknonw level\n", stderr);
-        return 200;
+        return ERROR_CODE;
     }
     timeout(delay_time);
-    snake_init(&snake_head, INIT_SIZE, &game_field);
-
+    if (snake_init(&snake_head, &game_field) == ERROR) {
+        endwin();
+        perror("snake_init");
+        return ERROR_CODE;
+    }
+    draw_char(get_head_point(snake_head), CHR_SN_HEAD, HEAD_PAIR);
+    for (i = INIT_SIZE; i > 0; i--) {
+        if (snake_lengthen(snake_head, &game_field) == ERROR) {
+            endwin();
+            fputs("snake_lengthen: impossible increment\n", stderr);
+        }
+        draw_char(get_tail_point(snake_head), CHR_SN_BODY, BODY_PAIR);
+    }
     snake_spawn_apple(snake_head, &apple, &game_field);
+    draw_char(&apple, CHR_APPLE, APPLE_PAIR);
 
     /* game loop */
     while ((key = getch()) != KEY_ESCAPE && key != 'q' && key != 'Q') {
@@ -75,17 +90,29 @@ int main(void)
             break;
         case KEY_RESIZE:
             getmaxyx(stdscr, game_field.y, game_field.x);
-            handle_resize(snake_head, &game_field);
+            if (handle_resize(snake_head, &game_field) == ERROR) {
+                    fputs("Shit! You killed snake because small screen absorbed his"
+            " body and she die :((\n", stderr);
+                    return ERROR_CODE;
+            }
             rebuild_game(&game_field, snake_get_size(snake_head));
         /* case ERR and default skip */
         }
-        snake_move(snake_head);
-        move(0, 11); /* hide cursor if no colors */
+        draw_char(get_head_point(snake_head), CHR_SN_BODY, BODY_PAIR);
+        draw_char(get_tail_point(snake_head), CHR_EMPTY, BG_PAIR);
+        snake_move(snake_head); /* check will be going in init game */
+        draw_char(get_head_point(snake_head), CHR_SN_HEAD, HEAD_PAIR);
 
+        move(0, 11); /* hide cursor if no colors */
+        
         head_p = get_head_point(snake_head);
         if (apple.x == head_p->x && apple.y == head_p->y) {
-            snake_lengthen(snake_head, &game_field);
+            if (snake_lengthen(snake_head, &game_field)) {
+                endwin();
+                fputs("snake_lengthen: impossible increment\n", stderr);
+            }
             snake_spawn_apple(snake_head, &apple, &game_field);
+            draw_char(&apple, CHR_APPLE, APPLE_PAIR);
             update_stats(&game_field, snake_get_size(snake_head));
         } else 
         if (snake_check_hit(head_p, get_after_head_segm(snake_head))

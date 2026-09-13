@@ -12,6 +12,16 @@ void init_my_pairs()
     init_pair(WIN_PAIR,    COLOR_GREEN,   COLOR_GREEN);
     init_pair(LOSE_PAIR,   COLOR_RED,     COLOR_RED);
 }
+void draw_char(point *p, char c, int pair)
+{
+    if (has_colors())
+        attrset(COLOR_PAIR(pair));
+    else
+        attrset(COLOR_PAIR(COMMON_PAIR));
+        
+    mvaddch(p->y, p->x, c);
+    refresh();
+}
 
 static void draw_rect(int lx, int uy, int rx, int dy)
 {
