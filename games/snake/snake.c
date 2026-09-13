@@ -33,7 +33,11 @@ void snake_init(snake **s, int init_size, point *game_field)
     head->cur_p.y = game_field->y / 2;
     head->next = head->prev = (*s)->head = (*s)->tail = head;
 
+    if (has_colors())
+        attrset(COLOR_PAIR(HEAD_PAIR));
     mvaddch((*s)->head->cur_p.y, (*s)->head->cur_p.x, CHR_SN_HEAD);
+    if (has_colors())
+        attrset(COLOR_PAIR(BODY_PAIR));
     while (--init_size > 0) {
         snake_lengthen(*s, game_field);
         mvaddch((*s)->tail->cur_p.y, (*s)->tail->cur_p.x, CHR_SN_BODY);
@@ -42,7 +46,10 @@ void snake_init(snake **s, int init_size, point *game_field)
 
 void snake_move(snake *s) 
 {
+    if (has_colors())
+        attrset(COLOR_PAIR(BG_PAIR));
     mvaddch(s->tail->cur_p.y, s->tail->cur_p.x, CHR_EMPTY);
+
     s->tail->cur_p = s->head->cur_p;
     s->head = s->tail;
     s->tail = s->head->prev;
@@ -57,9 +64,12 @@ void snake_move(snake *s)
         fputs("snake_move: no such case, fatal error\n", stderr);
         exit(200);
     }
+    if (has_colors())
+        attrset(COLOR_PAIR(BODY_PAIR));
     if (s->head->next != NULL)
         mvaddch(s->head->next->cur_p.y, s->head->next->cur_p.x, CHR_SN_BODY);
-
+    if (has_colors())
+        attrset(COLOR_PAIR(HEAD_PAIR));
     mvaddch(s->head->cur_p.y, s->head->cur_p.x, CHR_SN_HEAD);
     refresh();
 }
@@ -91,6 +101,8 @@ void snake_spawn_apple(const snake *s, point *app, point *game_field)
         app->x = (rand() % (game_field->x-2)) + 1;
         app->y = (rand() % (game_field->y-2)) + 1;
     } while (snake_check_hit(app, s->head->next));
+    if (has_colors())
+        attrset(COLOR_PAIR(APPLE_PAIR));
     mvaddch(app->y, app->x, CHR_APPLE);
     refresh();
 }

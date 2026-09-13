@@ -1,31 +1,49 @@
+/* snake: support modern and legacy terminals, check common_types.h to
+ * override ENTER */
+#include <stdio.h>
 #include <curses.h>
+#include "common_types.h"
 #include "snake.h"
 #include "tui.h"
 
-#define KEY_ESCAPE  27
-#define DELAY_TIME  100
-
-/* TODO: 
- * colors
- * levels
-*/
+#define KEY_ESCAPE      27
+#define DELAY_TIME_EASY 130
+#define DELAY_TIME_NORM 50
+#define DELAY_TIME_HARD 30
 
 int main(void)
 {
     /* game init */
     snake *snake_head; /* AUTO_INIT, NULL not needed */
     point apple, game_field;
-    int key;
+    int key, delay_time;
 
     initscr();
     start_color();
+    if (has_colors())
+        init_my_pairs();
     cbreak();
     noecho();
     curs_set(0);
     keypad(stdscr, 1);
-    timeout(DELAY_TIME);
+
     getmaxyx(stdscr, game_field.y, game_field.x);
-    start_game(&game_field, INIT_SIZE);
+    if (game_field.y < MIN_SIZE_WINDOW || game_field.x < MIN_SIZE_WINDOW) {
+        endwin();
+        fprintf(stderr, "Too small window. set %d+ size\n", MIN_SIZE_WINDOW);
+        return 1;
+    }
+
+    switch (start_game(&game_field, INIT_SIZE)) {
+    case easy:   delay_time = DELAY_TIME_EASY; break;
+    case normal: delay_time = DELAY_TIME_NORM; break;
+    case hard:   delay_time = DELAY_TIME_HARD; break;
+    default:
+        endwin();
+        fputs("main: unknonw level\n", stderr);
+        return 200;
+    }
+    timeout(delay_time);
     snake_init(&snake_head, INIT_SIZE, &game_field);
 
     snake_spawn_apple(snake_head, &apple, &game_field);
@@ -53,7 +71,7 @@ int main(void)
         case 'P':
             timeout(-1);
             getch();
-            timeout(DELAY_TIME);
+            timeout(delay_time);
             break;
         case KEY_RESIZE:
             getmaxyx(stdscr, game_field.y, game_field.x);
@@ -62,6 +80,7 @@ int main(void)
         /* case ERR and default skip */
         }
         snake_move(snake_head);
+        move(0, 11); /* hide cursor if no colors */
 
         head_p = get_head_point(snake_head);
         if (apple.x == head_p->x && apple.y == head_p->y) {

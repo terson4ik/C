@@ -1,5 +1,0 @@
-#!/bin/bash
-
-gcc -Wall -c snake.c tui.c -lncurses
-gcc -Wall main.c snake.o tui.o -lncurses
-rm -rf *.o

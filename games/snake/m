@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# if you have not installed `make` run it's file
+
+gcc -Wall -c snake.c tui.c -lncurses
+gcc -Wall main.c snake.o tui.o -lncurses -o snake
+
+rm -rf *.o
+./snake

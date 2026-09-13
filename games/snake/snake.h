@@ -2,11 +2,6 @@
 #define SNAKE_SENTRY_HEADER
 
 #include "common_types.h"
-#define CHR_SN_HEAD '@'
-#define CHR_SN_BODY 'o'
-#define CHR_APPLE   '+'
-#define CHR_EMPTY   ' '
-#define INIT_SIZE   (1 + 3) /* head + 3 body */
 
 enum sides { UP = 0, DOWN, LEFT, RIGHT };
 
