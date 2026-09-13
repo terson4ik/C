@@ -105,6 +105,7 @@ void end_game(point *game_field, int size, int is_win)
         }
         if (is_new_rec) {
             shift = 3;
+            attrset(A_BOLD | A_UNDERLINE);
             mvprintw(medianY+2, medianX, "HOLY SHIT! IT'S NEW RECORD: %dcm!", size);
         } else {
             shift = 4;
