@@ -1,3 +1,4 @@
+#include <stdio.h> /* new records */
 #include <curses.h>
 #include "tui.h" /* common types also included here */
 
@@ -56,7 +57,8 @@ void end_game(point *game_field, int size, int is_win)
 {
     const int medianX = game_field->x / 2 - 7;
     const int medianY = game_field->y / 2;
-    int key;
+    int key, shift, old_rec, is_new_rec;
+    FILE *records;
 
     clear();
     attrset(A_REVERSE);
@@ -79,12 +81,41 @@ void end_game(point *game_field, int size, int is_win)
        }
         mvaddstr(medianY, medianX, "YOU DIE :(");
         mvaddstr(medianY+1, medianX, "BUT!!!");
-        mvprintw(medianY+2, medianX, "YOUR LENGTH BEFORE DIE %dcm!", size);
+
+        records = fopen(RECORD_FILE_NAME, "r");
+        is_new_rec = 0;
+        if (records) {
+            fscanf(records, "%d", &old_rec);
+            fclose(records);
+            if (old_rec < size) {
+                records = fopen(RECORD_FILE_NAME, "w");
+                if (records) {
+                    fprintf(records, "%d", size);
+                    fclose(records);
+                }
+                is_new_rec = 1;
+            }
+        } else if (!records) {
+            records = fopen(RECORD_FILE_NAME, "w");
+            if (records) {
+                is_new_rec = 1;
+                fprintf(records, "%d", size);
+                fclose(records);
+            }
+        }
+        if (is_new_rec) {
+            shift = 3;
+            mvprintw(medianY+2, medianX, "HOLY SHIT! IT'S NEW RECORD: %dcm!", size);
+        } else {
+            shift = 4;
+            mvprintw(medianY+2, medianX, "YOUR LENGTH BEFORE DIE %dcm;", size);
+            mvprintw(medianY+3, medianX, "OLD LARGEST SNAKE HAVE %dcm;", old_rec);
+        }
     }
     refresh();
     timeout(-1);
     attrset(A_BLINK | A_BOLD | A_UNDERLINE);
-    mvaddstr(medianY+3, medianX, "PRESS ENTER TO CONTINUE...");
+    mvaddstr(medianY+shift, medianX, "PRESS ENTER TO CONTINUE...");
     refresh();
     while ((key = getch()) != KEY_ENTER)
         if (key == KEY_RESIZE) {

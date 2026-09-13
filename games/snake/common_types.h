@@ -14,6 +14,7 @@
 #define CHR_SN_BODY 'o'
 #define CHR_APPLE   '&'
 #define CHR_EMPTY   ' '
+#define RECORD_FILE_NAME ".records.txt"
 
 #define MIN_SIZE_WINDOW 15
 
