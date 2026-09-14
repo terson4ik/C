@@ -1,0 +1,10 @@
+typedef double (*d3vptr)[3];
+typedef d3vptr (*search_for_vec_fptr)(d3vptr, int, double);
+search_for_vec_fptr set_sr_func(int num, search_for_vec_fptr func);
+
+d3vptr(*set_sr_func(int num, d3vptr((*func)(d3vptr, int, double))))(d3vptr, int,
+double));
+
+double (*(*set_sr_func(int num, double(*(*func)(double (*)[3], int,
+double))[3]))(double(*)[3], int, double))[3];
+
