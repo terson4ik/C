@@ -1,0 +1,36 @@
+a)int *(*f(int))[10];
+f это функция примающая инт и возращает указатель на массив 10 
+указатетелей типа инт
+
+typedef int *intptr;
+typedef intptr (*intvec10)[10];
+intvec10 f(int);
+
+b)void (*fpvec[15])(int, void (*)(int, void*), void*);
+fpvec это масив указателей на функцию которая принимает инт и указатель на
+функцию которая приминаем инт и нетепиз. адрес и ничего не возращает, и 3
+аргумент это нетип. адрес, и вот эта fpvec ничего не возращает
+
+typedef void((*ptrf)(int, void*));
+typedef void((*calback)(int, ptrf, void*));
+calback fpvec[15];
+
+c)double (*(*repfptr)(double(*)(double)))(double);
+repfptr это указатель на функцию которая принимает функцию которая принимает и
+возращает дабл, и вот это всё это указатель на фукнцию которая принимает и
+возращает дабл
+
+typedef double (*fptr)(double);
+
+fptr (*repfptr)(fptr);
+
+d)int (*(*fvecpos)[4])(void(*)(double*));
+fvecpos это указатель на масив из 4 елементов указателей на функцию примающую
+функцию которая принимает адрес дабл и ничего не возращает, и это есть инт
+
+typedef void ((*voidfunptr)(double *));
+typedef int ((*fptr)(voidfunptr));
+
+fptr (*fvecpos)[4];
+
+
