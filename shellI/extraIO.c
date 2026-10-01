@@ -29,9 +29,15 @@ word *word_init(void)
     return w;
 }
 
+#define PUSH(stack, val) \
+do { \
+    *stack = val; \
+    stack++; \
+} while (0)
+
 enum word_status get_word(word *w)
 {
-    int c, in_quot;
+    int c, in_quot = 0;
     char *cur_c = w->word;
     if (!w || !w->word)
         return FATAL_ERR;
@@ -40,22 +46,36 @@ enum word_status get_word(word *w)
     }
 
     *cur_c = '\0';
-    if (IS_EOL(c))
+    if (IS_EOL(c)) {
         return EOL;
-    else
-        if (c != '\"')
-            *(cur_c++) = c;
-
-    in_quot  = (c == '\"') ? 1 : 0;
-    w->cur_l = 0;
+    } else {
+        w->cur_l = 0;
+        if (c == '\"') {
+            in_quot = 1;
+        } else {
+            if (c == '\\') {
+                c = getchar();
+                if (c == EOF)
+                    return EOL;
+            }
+        }
+            PUSH(cur_c, c);
+            w->cur_l++;
+    }
 
     while (((!isspace(c = getchar())) || (isspace(c) && in_quot)) && !IS_EOL(c)) {
-        if (c == '\"') {
+        switch (c) {
+        case '\"':
             in_quot = !in_quot;
-            continue;
+            continue; /* no break */
+        case '\\':
+            c = getchar();
+            if (c == EOF)
+                continue;
+            break;
         }
 
-        *(cur_c++) = c;
+        PUSH(cur_c, c);
         w->cur_l++;
 
         if (w->cur_l >= w->max_l) {

@@ -8,8 +8,8 @@ EXE = shell1
 %.o: %.c %.h
 	$(CC) $(FLAGS) -c $< -o $@
 
-prog: $(OBJMODULS)
-	$(CC) $(FLAGS) $^ -o prog
+$(EXE): $(OBJMODULS)
+	$(CC) $(FLAGS) $^ -o $(EXE)
 
 run: $(EXE)
 	./$(EXE)
