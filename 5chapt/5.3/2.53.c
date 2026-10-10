@@ -57,6 +57,10 @@ int main(int argc, char **argv)
         }
         write(fd_lengths, &len, sizeof(len));
     }
+
+    fclose(source);
+    fclose(spaces);
+    close(fd_lengths);
     return 0;
 }
 
