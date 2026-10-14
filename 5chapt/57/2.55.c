@@ -5,9 +5,10 @@
 
 /* own implementation; study reason(!) */
 static size_t str_len(const char *s);
-static int str_str(const char *s1, const char *s2);
 static int str_case_str(const char *s1, const char *s2);
 static int str_n_str(const char *s1, const char *s2, ssize_t size);
+static void str_n_cpy(char *dst, const char *src, ssize_t size);
+static void dirty_memset(void *s1, const void *s2, ssize_t size);
 
 enum os_halts {
     ARGS_ERROR = 1,
@@ -19,7 +20,7 @@ enum node_info {
     FIELD_MAX_SIZE = STR_MAX_SIZE + INT_WID
 };
 enum operations { ADD, QUERY, LIST, UNKNOWN };
-enum exit_codes { OK = 0, ERR = -1 };
+enum exit_codes { OK = 0, UNK = 1, ERR = -1 };
 
 /* !!! handling() and dirty_* use exit() !!! */
 static void handling_args(const char *file_nm, const char *command,
@@ -28,9 +29,13 @@ static enum operations get_operation(const char *s);
 static enum exit_codes add(const char *name, int fd);
 /* also return exit_codes(-1) */
 static unsigned int query(const char *name, int fd);
-static exit_codes list(int fd);
-static exit_codes read_one_node(int fd, char buf[FIELD_MAX_SIZE]);
-
+static enum exit_codes list(int fd);
+static int read_one_node(int fd, char buf[FIELD_MAX_SIZE]);
+static enum exit_codes write_new_node(const char *name, unsigned int val, int fd);
+static enum exit_codes find_fld(const char *name, char buf[FIELD_MAX_SIZE],
+                                unsigned int *cnt, int fd);
+static enum exit_codes read_fld(char buf[FIELD_MAX_SIZE], unsigned int *cnt,
+                                int fd);
 static int dirty_open(const char *name, int mode, int perms);
 static void unsopported_file_halt(const char *name);
 
@@ -45,8 +50,8 @@ int main(int argc, char **argv)
         return ARGS_ERROR;
     }
 
-    if (argv[3] && str_len(argv[3]) >= FIELD_MAX_SIZE) {
-        fprintf(stderr, "Too long field. Max length %d", STR_MAX_SIZE);
+    if (argv[3] && str_len(argv[3]) >= STR_MAX_SIZE) {
+        fprintf(stderr, "Too long field. Max length %d\n", STR_MAX_SIZE);
         return ARGS_ERROR;
     }
 
@@ -75,7 +80,7 @@ static void handling_args(const char *file_nm, const char *command,
         case QUERY:
             fd = dirty_open(file_nm, O_RDONLY, WRAP_PERMS);
             status = query(field, fd); /* by default enum is int */
-            printf(((status == OK) ? "%u\n" : ""), status);
+            printf(((status != ERR) ? "%u\n" : ""), status);
             break;
         case LIST:
             fd = dirty_open(file_nm, O_RDONLY, WRAP_PERMS);
@@ -93,18 +98,95 @@ static void handling_args(const char *file_nm, const char *command,
 
 static enum exit_codes add(const char *name, int fd)
 {
+    char buf[FIELD_MAX_SIZE];
+    unsigned int count;
+
+    switch (find_fld(name, buf, &count, fd)) {
+    case OK:
+        count++;
+        return write_new_node(name, count, fd);
+    case UNK:
+        count = 1;
+        return write_new_node(name, count, fd);
+    case ERR:
+    default:
+        return ERR;
+    }
 }
 
 static unsigned int query(const char *name, int fd)
 {
+    char buf[FIELD_MAX_SIZE];
+    unsigned int count;
+
+    switch (find_fld(name, buf, &count, fd)) {
+    case OK:  return count;
+    case UNK: return 0;
+    case ERR: default: return ERR;
+    }
 }
 
-static exit_codes list(int fd)
+static enum exit_codes list(int fd)
 {
+    enum exit_codes stat;
+    char buf[FIELD_MAX_SIZE]; unsigned int count;
+
+    while ((stat = read_fld(buf, &count, fd)) == OK)
+        printf("%.*s: %u\n", STR_MAX_SIZE, buf, count);
+
+    return (stat == ERR) ? ERR : OK;
 }
 
-static exit_codes read_one_node(int fd, char buf[FIELD_MAX_SIZE])
+static int read_one_node(int fd, char buf[FIELD_MAX_SIZE])
 {
+    int count = read(fd, buf, FIELD_MAX_SIZE);
+    if (count == 0 || count == FIELD_MAX_SIZE)
+        return (count == FIELD_MAX_SIZE) ? 1 : 0;
+    else
+        return ERR;
+}
+
+static enum exit_codes write_new_node(const char *name, unsigned int val, int fd)
+{
+    char buf[FIELD_MAX_SIZE];
+
+    str_n_cpy(buf, name, STR_MAX_SIZE);
+    dirty_memset(buf+STR_MAX_SIZE, &val, INT_WID);
+
+    return (write(fd, buf, FIELD_MAX_SIZE) == FIELD_MAX_SIZE) ? OK : ERR;
+}
+
+static enum exit_codes find_fld(const char *name, char buf[FIELD_MAX_SIZE],
+                                unsigned int *cnt, int fd)
+{
+    enum exit_codes stat;
+    if (!name) /* str_cmp will halts */
+        return ERR;
+
+    while ((stat = read_one_node(fd, buf)) > 0) {
+        if (str_n_str(buf, name, STR_MAX_SIZE)) {
+            dirty_memset(cnt, buf+STR_MAX_SIZE, INT_WID);
+            lseek(fd, -FIELD_MAX_SIZE, SEEK_CUR);
+            return OK;
+        }
+    }
+    if (stat == ERR)
+        return ERR;
+
+    return UNK;
+}
+
+static enum exit_codes read_fld(char buf[FIELD_MAX_SIZE], unsigned int *cnt,
+                                int fd)
+{
+    enum exit_codes stat;
+    if ((stat = read_one_node(fd, buf)) > 0) {
+        dirty_memset(cnt, buf+STR_MAX_SIZE, INT_WID);
+        return OK;
+    } else if (stat == ERR) {
+        return ERR;
+    }
+    return UNK;
 }
 
 static enum operations get_operation(const char *s)
@@ -144,14 +226,6 @@ static size_t str_len(const char *s)
     return r-s;
 }
 
-static int str_str(const char *s1, const char *s2)
-{
-    for (; *s1 == *s2; s1++, s2++)
-        if (!*s1 && !*s2)
-            return 1;
-    return 0;
-}
-
 static int str_n_str(const char *s1, const char *s2, ssize_t size)
 {
     for (; size > 0 && *s1 == *s2; s1++, s2++, size--)
@@ -167,4 +241,21 @@ static int str_case_str(const char *s1, const char *s2)
         if (!*s1 && !*s2)
             return 1;
     return 0;
+}
+
+static void dirty_memset(void *s1, const void *s2, ssize_t size)
+{
+    char *dst = s1;
+    const char *src = s2;
+    while (size-- > 0)
+        *dst++ = *src++;
+}
+
+static void str_n_cpy(char *dst, const char *src, ssize_t size)
+{
+    while (size-- > 0 && (*dst++ = *src++))
+    {}
+
+    while (size-- > 0)
+        *dst++ = '\0';
 }
