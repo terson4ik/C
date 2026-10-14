@@ -8,7 +8,7 @@ static size_t str_len(const char *s);
 static int str_case_str(const char *s1, const char *s2);
 static int str_n_str(const char *s1, const char *s2, ssize_t size);
 static void str_n_cpy(char *dst, const char *src, ssize_t size);
-static void dirty_memset(void *s1, const void *s2, ssize_t size);
+static void dirty_memcpy(void *s1, const void *s2, ssize_t size);
 
 enum os_halts {
     ARGS_ERROR = 1,
@@ -104,7 +104,12 @@ static enum exit_codes add(const char *name, int fd)
     switch (find_fld(name, buf, &count, fd)) {
     case OK:
         count++;
-        return write_new_node(name, count, fd);
+        lseek(fd, STR_MAX_SIZE, SEEK_CUR);
+        {
+            int cnt;
+            cnt = write(fd, &count, INT_WID);
+            return (cnt == INT_WID) ? OK : ERR;
+        }
     case UNK:
         count = 1;
         return write_new_node(name, count, fd);
@@ -151,7 +156,7 @@ static enum exit_codes write_new_node(const char *name, unsigned int val, int fd
     char buf[FIELD_MAX_SIZE];
 
     str_n_cpy(buf, name, STR_MAX_SIZE);
-    dirty_memset(buf+STR_MAX_SIZE, &val, INT_WID);
+    dirty_memcpy(buf+STR_MAX_SIZE, &val, INT_WID);
 
     return (write(fd, buf, FIELD_MAX_SIZE) == FIELD_MAX_SIZE) ? OK : ERR;
 }
@@ -165,7 +170,7 @@ static enum exit_codes find_fld(const char *name, char buf[FIELD_MAX_SIZE],
 
     while ((stat = read_one_node(fd, buf)) > 0) {
         if (str_n_str(buf, name, STR_MAX_SIZE)) {
-            dirty_memset(cnt, buf+STR_MAX_SIZE, INT_WID);
+            dirty_memcpy(cnt, buf+STR_MAX_SIZE, INT_WID);
             lseek(fd, -FIELD_MAX_SIZE, SEEK_CUR);
             return OK;
         }
@@ -181,7 +186,7 @@ static enum exit_codes read_fld(char buf[FIELD_MAX_SIZE], unsigned int *cnt,
 {
     enum exit_codes stat;
     if ((stat = read_one_node(fd, buf)) > 0) {
-        dirty_memset(cnt, buf+STR_MAX_SIZE, INT_WID);
+        dirty_memcpy(cnt, buf+STR_MAX_SIZE, INT_WID);
         return OK;
     } else if (stat == ERR) {
         return ERR;
@@ -243,7 +248,7 @@ static int str_case_str(const char *s1, const char *s2)
     return 0;
 }
 
-static void dirty_memset(void *s1, const void *s2, ssize_t size)
+static void dirty_memcpy(void *s1, const void *s2, ssize_t size)
 {
     char *dst = s1;
     const char *src = s2;
