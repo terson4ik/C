@@ -19,6 +19,7 @@ enum return_values { OK, FILE_ERR = -1 };
 static enum return_values create_summary(int fd1, int fd2, int fd_rslt);
 static int open_data_base(const char *fname);
 static enum return_values read_one_field(char buf[FIELD_MAX_SIZE], int fd);
+static enum return_values cmp_2_fd(int fd1, int fd2);
 static void buf_fetch_count(char buf[FIELD_MAX_SIZE], unsigned int *count);
 static void buf_write_count(char buf[FIELD_MAX_SIZE], unsigned int count);
 static void my_memcpy(void *dst, const void *src, ssize_t size);
