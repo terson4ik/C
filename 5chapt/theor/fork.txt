@@ -1,0 +1,39 @@
+p = fork();
+if (p == 0) {
+    /* commands to children */
+} else {
+    /* commands to parent */
+}
+
+OR
+
+p = fork();
+if (p == 0) {
+    /* commands to children */
+    exit(0);
+} /* no else here */
+
+/* commands to parent */
+
+also we need check to -1 to find erorr
+
+go to see example of use mmap SHARED:
+
+int pgs, pid;
+int *ptr;
+int size = 4096;
+pgs = getpagesize();
+size = (size-1) / pgs + 1) * pgs;
+ptr = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANANYMOUS, 0, 0);
+if (ptr == MAP_FAILED)
+    error();
+
+pid = fork();
+if (pid == 0)
+    child
+else
+    parent
+---------------------------
+this memory will be used both of these processes
+also, rice condition is evil;
+in 7 chapter this question will be complete
