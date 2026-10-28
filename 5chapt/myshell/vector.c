@@ -1,5 +1,13 @@
+#include <stdio.h> /* EOF only */
+#include <stdlib.h>
+#include <errno.h>
 #include "my_string.h"
 #include "vector.h"
+
+struct vector_tag {
+    char *buf;
+    size_t cur_len, max_len;
+}; /* typedef in header */
 
 vector *vector_init(size_t init_size)
 {
@@ -8,6 +16,7 @@ vector *vector_init(size_t init_size)
         return NULL;
 
     new->buf = malloc(init_size);
+
     if (!new->buf) {
         free(new);
         return NULL;
@@ -20,7 +29,7 @@ vector *vector_init(size_t init_size)
 }
 
 /* if ok return c, else -1 */
-int vector_push_c(vector *v, int c);
+int vector_push_c(vector *v, int c)
 {
     if (c == EOF)
         return -1;
@@ -39,25 +48,30 @@ int vector_push_c(vector *v, int c);
 }
 
 /* if error return -1 */
-int vector_push_str(vector *v, const char *s);
+int vector_push_str(vector *v, const char *s)
 {
     for (; *s; s++)
-        if (vector_push_c(*s) == -1)
+        if (vector_push_c(v, *s) == -1)
             return -1;
     return 1;
 }
 
-char *vector_get_str(vector *v);
+char *vector_get_str(vector *v)
 {
     return v->buf;
 }
 
-void vector_buf_reset(vecor *v);
+int vector_buf_is_empty(vector *v)
+{
+    return v->buf[0] == '\0';
+}
+
+void vector_buf_reset(vector *v)
 {
     v->buf[0] = '\0';
 }
 
-void vector_dispose(vector *v);
+void vector_dispose(vector *v)
 {
     free(v->buf);
     free(v);

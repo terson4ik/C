@@ -1,21 +1,21 @@
 #include <stdlib.h>
 #include "word_list.h"
 
-static word_node_new(const char *str);
+struct word_node_tag {
+    char *str;
+    struct word_node_tag *next;
+}; /* typedef in header */
 
-word_que word_que_init()
+static word_node *word_node_new(const char *str);
+
+word_que *word_que_init(void)
 {
     word_que *new = malloc(sizeof(*new));
     if (!new)
         return NULL;
-    word_que_ptr_fill_nulls(new);
-    return new;
-}
 
-/* alternative quick init*/
-void word_que_ptr_fill_nulls(word_que *q)
-{
-    q->f = q->l = NULL;
+    new->f = new->l = NULL;
+    return new;
 }
 
 /* return -1 if error */
@@ -27,7 +27,7 @@ int word_que_push(word_que *q, const char *str)
 
     if (q->f) {
         q->l->next = new;
-        q->l = q->l->next
+        q->l = q->l->next;
     } else {
         q->f = q->l = new;
     }
@@ -44,23 +44,24 @@ char *word_que_pop(word_que *q)
     return targ;
 }
 
-unsigned int word_que_count(word_node *wn)
+unsigned int word_que_count(word_que *q)
 {
     int i;
-    for (i = 0; wn; wn = wn->next, i++)
-    {}
+    word_node *cur;
+    for (i = 0, cur = q->f; cur; cur = cur->next)
+        i++;
     return i;
 }
 
 char **word_que_create_ptr_arr(word_que *q)
 {
-    unsigned i = word_que_count(q->f);
-    char **argv = malloc(i * sizeof(char *));
+    unsigned int count = word_que_count(q);
+    char **argv = malloc(count * sizeof(char *));
     char **runner;
     if (!argv)
         return NULL;
 
-    for(runner = argv; i > 0; i--, runner++, q->f = q->f->next)
+    for(runner = argv; count > 0; count--, runner++, q->f = q->f->next)
         *runner = q->f->str;
 
     return argv;
@@ -85,7 +86,9 @@ void word_que_dispose(word_que *q)
 static word_node *word_node_new(const char *str)
 {
     word_node *new = malloc(sizeof(*new));
-    new->str  = str;
+    if (!new)
+        return NULL;
+    new->str  = (char *)str;
     new->next = NULL;
     return new;
 }

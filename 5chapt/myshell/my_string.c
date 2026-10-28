@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "my_string.h"
 
 size_t mstrlen(const char *s)
@@ -40,7 +41,7 @@ int mstrstr(const char *s1, const char *s2)
     return 1;
 }
 
-char *mstr_realloc(const char *s, size_t new_size)
+char *mstr_realloc(char *s, size_t new_size)
 {
     char *new = malloc(new_size);
     if (!new)
