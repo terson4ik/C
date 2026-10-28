@@ -3,7 +3,7 @@
 #include "shell_engine.h"
 #include "parser.h"
 
-void fail_handler(enum fails fail);
+static void fail_handler(enum fails fail);
 
 int main(void)
 {
@@ -44,7 +44,7 @@ int main(void)
     return 0;
 }
 
-void fail_handler(enum fails fail)
+static void fail_handler(enum fails fail)
 {
     switch (fail) {
     case QUOTES_ERROR:
