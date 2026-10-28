@@ -21,24 +21,49 @@ void word_que_ptr_fill_nulls(word_que *q)
 /* return -1 if error */
 int word_que_push(word_que *q, const char *str)
 {
-    l = word_node_new(str);
-    if (!q->f)
+    word_node *new = word_node_new(str);
+    if (!new)
+        return -1;
 
+    if (q->f) {
+        q->l->next = new;
+        q->l = q->l->next
+    } else {
+        q->f = q->l = new;
+    }
+
+    return 0;
 }
 
-char *word_que_pop_first(word_que *q)
+char *word_que_pop(word_que *q)
 {
-
+    word_node *cur = q->f;
+    char *targ = cur->str;
+    q->f = q->f->next;
+    free(cur);
+    return targ;
 }
 
-char *word_que_pop_last(word_que *q)
+unsigned int word_que_count(word_node *wn)
 {
+    int i;
+    for (i = 0; wn; wn = wn->next, i++)
+    {}
+    return i;
 }
 
-/* count == 0 --> function herself calculate it */
-char **word_que_create_ptr_arr(word_que *q, unsigned int count)
+char **word_que_create_ptr_arr(word_que *q)
 {
-    
+    unsigned i = word_que_count(q->f);
+    char **argv = malloc(i * sizeof(char *));
+    char **runner;
+    if (!argv)
+        return NULL;
+
+    for(runner = argv; i > 0; i--, runner++, q->f = q->f->next)
+        *runner = q->f->str;
+
+    return argv;
 }
 
 void word_que_clean_words(word_que *q)

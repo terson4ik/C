@@ -18,12 +18,10 @@ void word_que_ptr_fill_nulls(word_que *q);
 
 /* return -1 if error */
 int word_que_push(word_que *q, const char *str);
+char *word_que_pop(word_que *q);
 
-char *word_que_pop_first(word_que *q);
-char *word_que_pop_last(word_que *q);
-
-/* count == 0 --> function herself calculate it */
-char **word_que_create_ptr_arr(word_que *q, unsigned int count);
+unsigned int word_que_count(word_node *wn);
+char **word_node_create_ptr_arr(word_node *wn);
 
 void word_que_clean_words(word_que *q);
 void word_que_dispose(word_que *q);
