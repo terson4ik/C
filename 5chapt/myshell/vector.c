@@ -1,6 +1,5 @@
 #include <stdio.h> /* EOF only */
 #include <stdlib.h>
-#include <errno.h>
 #include "my_string.h"
 #include "vector.h"
 
@@ -68,7 +67,8 @@ int vector_buf_is_empty(vector *v)
 
 void vector_buf_reset(vector *v)
 {
-    v->buf[0] = '\0';
+    v->buf[0]  = '\0';
+    v->cur_len = 0;
 }
 
 void vector_dispose(vector *v)

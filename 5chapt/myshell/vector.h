@@ -4,7 +4,6 @@
 typedef struct vector_tag vector;
 
 vector *vector_init(size_t init_size);
-int vector_arr_init(vector *v, size_t init_size);
 
 /* if ok return c, else -1 */
 int vector_push_c(vector *v, int c);

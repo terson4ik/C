@@ -5,7 +5,7 @@
 
 size_t mstrlen(const char *s);
 void mstrcpy(char *dst, const char *src);
-char *mstrdup(char *s);
+char *mstrdup(const char *s);
 void mstrcat(char *head, const char *tail);
 int mstrcmp(const char *s1, const char *s2);
 int mstrstr(const char *s1, const char *s2);

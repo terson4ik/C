@@ -15,7 +15,7 @@ void mstrcpy(char *dst, const char *src)
     {}
 }
 
-char *mstrdup(char *s)
+char *mstrdup(const char *s)
 {
     char *new = malloc(mstrlen(s) + 1);
     if (!new)

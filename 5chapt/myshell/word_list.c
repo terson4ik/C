@@ -38,6 +38,9 @@ int word_que_push(word_que *q, const char *str)
 char *word_que_pop(word_que *q)
 {
     word_node *cur = q->f;
+    if (!cur)
+        return NULL;
+
     char *targ = cur->str;
     q->f = q->f->next;
     free(cur);
@@ -56,14 +59,15 @@ unsigned int word_que_count(word_que *q)
 char **word_que_create_ptr_arr(word_que *q)
 {
     unsigned int count = word_que_count(q);
-    char **argv = malloc(count * sizeof(char *));
+    char **argv = malloc((count+1) * sizeof(char *)); /* +NULL */
+    word_node *cur;
     char **runner;
     if (!argv)
         return NULL;
 
-    for(runner = argv; count > 0; count--, runner++, q->f = q->f->next)
-        *runner = q->f->str;
-
+    for(runner = argv, cur = q->f; count > 0; count--, runner++, cur = cur->next)
+        *runner = cur->str;
+    *runner = NULL;
     return argv;
 }
 
@@ -75,6 +79,7 @@ void word_que_clean_words(word_que *q)
         free(cur->str);
         free(cur);
     }
+    q->l = NULL;
 }
 
 void word_que_dispose(word_que *q)
