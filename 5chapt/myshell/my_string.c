@@ -33,7 +33,10 @@ void mstrcat(char *head, const char *tail)
 
 int mstrcmp(const char *s1, const char *s2)
 {
-    return 1;
+    for (; *s1 == *s2; s1++, s2++)
+        if (*s1 == '\0')
+            return 0;
+    return (unsigned int)*s1 - (unsigned int)*s2;
 }
 
 int mstrstr(const char *s1, const char *s2)
