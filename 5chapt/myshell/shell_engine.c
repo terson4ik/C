@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h> /* access to getenv */
 #include <unistd.h>
 #include <sys/wait.h>
 #include "shell_engine.h"
@@ -8,8 +9,14 @@ int run_command(char **argv)
 {
     int pid;
     if (mstrcmp("cd", *argv) == 0) {
-        if (chdir(argv[1]) == -1) {
-            perror(*argv);
+        char *path = (argv[1]) ? argv[1] : getenv("HOME");
+        if (!path) {
+            fprintf(stderr, "%s: unknown path\n");
+            return -1;
+        }
+
+        if (chdir(path) == -1) {
+            perror(path);
             return -1;
         }
         return 0;
