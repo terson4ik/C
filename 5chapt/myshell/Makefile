@@ -1,7 +1,7 @@
-EXE = shell2
-CC = gcc
 OBJMODULS = my_string.o parser.o shell_engine.o vector.o word_list.o
 CFLAGS = -Wall -g
+EXE = shell2
+CC = gcc
 
 %.o: %.c %.h
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -9,8 +9,11 @@ CFLAGS = -Wall -g
 $(EXE): main.c $(OBJMODULS)
 	$(CC) $(CFLAGS) $^ -o $@
 
+build: $(EXE)
+
+
 run: $(EXE)
 	./$(EXE)
 
 clean:
-	rm -f *.o
+	rm -f *.o $(EXE)
