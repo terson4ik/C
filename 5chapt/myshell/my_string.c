@@ -39,9 +39,12 @@ int mstrcmp(const char *s1, const char *s2)
     return (unsigned int)*s1 - (unsigned int)*s2;
 }
 
-int mstrstr(const char *s1, const char *s2)
+char *mstrstr(const char *s1, const char *s2)
 {
-    return 1;
+    if (s1 == NULL || s2 == NULL)
+        return NULL;
+
+    return NULL;
 }
 
 char *mstr_realloc(char *s, size_t new_size)
