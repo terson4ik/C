@@ -8,6 +8,8 @@ struct vector_tag {
     size_t cur_len, max_len;
 }; /* typedef in header */
 
+static int smart_realoc(vector *v);
+
 vector *vector_init(size_t init_size)
 {
     vector *new = malloc(sizeof(*new));
@@ -33,14 +35,10 @@ int vector_push_c(vector *v, int c)
     if (c == EOF)
         return -1;
 
-    if (v->cur_len+1 >= v->max_len) {
-        char *ptr;
-        v->max_len *= 2;
-        ptr = mstr_realloc(v->buf, v->max_len);
-        if (!ptr)
+    if (v->cur_len+1 >= v->max_len)
+        if(smart_realoc(v) == -1)
             return -1;
-        v->buf = ptr;
-    }
+
     v->buf[v->cur_len++] = c;
     v->buf[v->cur_len]   = '\0';
     return c;
@@ -49,9 +47,12 @@ int vector_push_c(vector *v, int c)
 /* if error return -1 */
 int vector_push_str(vector *v, const char *s)
 {
-    for (; *s; s++)
-        if (vector_push_c(v, *s) == -1)
+    v->cur_len += mstrlen(s);
+    if (v->cur_len >= v->max_len)
+        if(smart_realoc(v) == -1)
             return -1;
+
+    mstrcat(v->buf, s);
     return 1;
 }
 
@@ -75,4 +76,15 @@ void vector_dispose(vector *v)
 {
     free(v->buf);
     free(v);
+}
+
+static int smart_realoc(vector *v)
+{
+    char *ptr;
+    v->max_len = (v->cur_len+1) * 2;
+    ptr = mstr_realloc(v->buf, v->max_len);
+    if (!ptr)
+        return -1;
+    v->buf = ptr;
+    return 0;
 }
