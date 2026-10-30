@@ -44,6 +44,19 @@ char *mstrstr(const char *s1, const char *s2)
     if (s1 == NULL || s2 == NULL)
         return NULL;
 
+    if (*s2 == '\0')
+        return (char*)s1;
+
+    for (; *s1; s1++) {
+        const char *r1 = s1;
+        const char *r2 = s2;
+        for (; (*r1 && *r2) && (*r1 == *r2); r1++, r2++)
+        {}
+
+        if (*r2 == '\0')
+            return (char*)s1;
+    }
+
     return NULL;
 }
 
