@@ -9,7 +9,7 @@
 static int cd(char **argv);
 static char *cd_path_helper(char *target, int go_home, char *home);
 
-int run_command(char **argv)
+int shell_run_command(char **argv, int in_bg)
 {
     int pid;
     if (mstrcmp("cd", *argv) == 0)
@@ -26,8 +26,21 @@ int run_command(char **argv)
         fflush(stderr);
         _exit(255);
     }
-    wait(NULL);
+
+    if (in_bg) {
+        shell_clear_zombies();
+    } else {
+        int p;
+        while ((p = wait(NULL)) != pid && p != -1)
+        {}
+    }
     return 0;
+}
+
+void shell_clear_zombies(void)
+{
+    while (waitpid(-1, NULL, WNOHANG) > 0)
+    {}
 }
 
 static int cd(char **argv)

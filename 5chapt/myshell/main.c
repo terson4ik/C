@@ -3,7 +3,7 @@
 #include "shell_engine.h"
 #include "parser.h"
 
-static void fail_handler(enum fails fail);
+static void fail_handler(enum fails fail, int c);
 
 int main(void)
 {
@@ -24,7 +24,7 @@ int main(void)
         }
         fail = parser_is_fail(p);
         if (fail != OK) {
-            fail_handler(fail);
+            fail_handler(fail, parser_get_error_token(p));
         } else 
         if (parser_get_count_words(p) > 0) {
             char **args = parser_get_argv(p);
@@ -32,11 +32,12 @@ int main(void)
                 perror("sh");
                 return 1;
             }
-            run_command(args);
+            shell_run_command(args, parser_in_bg(p));
             free(args);
         }
 
         parser_reset(p);
+        shell_clear_zombies();
         fputc('\n', stdout);
     }
 
@@ -44,11 +45,14 @@ int main(void)
     return 0;
 }
 
-static void fail_handler(enum fails fail)
+static void fail_handler(enum fails fail, int c)
 {
     switch (fail) {
     case QUOTES_ERROR:
         fprintf(stderr, "Error: unmatched quotes\n");
+        return;
+    case UNEXPECTED_TOKEN_ERROR:
+        fprintf(stderr, "Error: syntax error near unexpected tocken '%c'", c);
         return;
     default:
         return;
