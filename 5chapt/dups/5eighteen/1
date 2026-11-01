@@ -1,0 +1,14 @@
+total 40
+-rw------- 1 terson terson     0 Nov  1 15:09 1
+-rw-r--r-- 1 terson terson  1005 Nov  1 14:49 a.c
+-rwx------ 1 terson terson 20808 Nov  1 15:09 a.out
+-rw-r--r-- 1 terson terson  1004 Nov  1 14:52 b.c
+-rw-r--r-- 1 terson terson   917 Nov  1 15:09 c.c
+-rw-r--r-- 1 terson terson   913 Nov  1 15:08 d.c
+1
+2
+a.c
+a.out
+b.c
+c.c
+d.c
