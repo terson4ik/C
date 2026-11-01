@@ -9,6 +9,7 @@
 struct parser_tag {
     vector *cur_word;
     word_que *w_que;
+    char *other_std_fd;
 
     int unexpect_err;
     unsigned int is_eof        : 1;
@@ -20,6 +21,10 @@ struct parser_tag {
     unsigned int is_bg_work    : 1;
     unsigned int in_quot       : 1;
     unsigned int need_skip     : 1;
+    unsigned int fd_append     : 1;
+    unsigned int fd_trunc      : 1;
+    unsigned int fd_read       : 1;
+    unsigned int fd_block      : 1;
 }; 
 
 #define INIT_BUF_SIZE   4096
@@ -31,7 +36,7 @@ enum result_of_hand_chr { EXIT, MORE, ERROR };
 static enum result_of_hand_chr handling_char(parser *p, int c);
 
 /* EOF not reset */
-static void reset_all_flags(parser *p);
+static void reset_all(parser *p);
 static void reset_line(parser *p);
 
 parser *parser_new(void)
@@ -54,7 +59,7 @@ parser *parser_new(void)
     }
 
     new->is_eol = 0;
-    reset_all_flags(new);
+    reset_all(new);
     return new;
 }
 
@@ -76,6 +81,8 @@ int parser_get_token(parser *p)
         str = mstrdup(vector_get_str(p->cur_word));
         if (!str)
             return -1;
+        if (p->fd_block)
+            p->other_std_fd =
         if (word_que_push(p->w_que, str) == -1)
             return -1;
 
@@ -136,7 +143,7 @@ void parser_reset(parser *p)
 {
     vector_buf_reset(p->cur_word);
     word_que_clean_words(p->w_que);
-    reset_all_flags(p);
+    reset_all(p);
 }
 
 void parser_dispose(parser *p)
@@ -199,6 +206,30 @@ static enum result_of_hand_chr handling_char(parser *p, int c)
             vector_push_c(p->cur_word, c);
         }
         return MORE;
+    case '>':
+        if (p->in_quot) {
+            vector_push_c(p->cur_word, c);
+            return MORE;
+        }
+        if (!p->fd_trunc) {
+            p->fd_trunc = 1;
+        } else if (!p->fd_append) {
+            p->fd_append = 1;
+        } else {
+            p->unexpect_err = '>';
+            return ERROR;
+        }
+
+        p->fd_block = 1;
+        return MORE;
+    case '<':
+        if (p->in_quot) {
+            vector_push_c(p->cur_word, c);
+            return MORE;
+        }
+            
+        p->
+        return MORE;
     default:
         if (p->is_bg_work) {
             p->bg_word_err = 1;
@@ -210,7 +241,7 @@ static enum result_of_hand_chr handling_char(parser *p, int c)
     }
 }
 
-static void reset_all_flags(parser *p)
+static void reset_all(parser *p)
 {
     p->in_quot       = 0;
     p->is_eol        = 0;
@@ -221,6 +252,14 @@ static void reset_all_flags(parser *p)
     p->bg_word_err   = 0;
     p->quot_err      = 0;
     p->unexpect_err  = 0;
+    p->fd_append     = 0;
+    p->fd_trunc      = 0;
+    p->fd_read       = 0;
+    p->fd_block      = 0;
+    if (p->other_std_fd) {
+        free(p->other_std_fd);
+        p->other_std_fd = NULL;
+    }
 }
 
 static void reset_line(parser *p)
