@@ -1,6 +1,6 @@
 OBJMODULS = my_string.o parser.o shell_engine.o vector.o word_list.o
 CFLAGS = -Wall -g
-EXE = shell2
+EXE = shell4
 CC = gcc
 
 %.o: %.c %.h

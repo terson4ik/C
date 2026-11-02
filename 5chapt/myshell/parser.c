@@ -48,7 +48,7 @@ static void reset_line(parser *p);
 
 enum result_of_hand_chr { EXIT, MORE, ERROR };
 #define PUSH_AND_RETURN_MORE(v, c) do { \
-    vector_push_c(vec, c); \
+    vector_push_c(v, c); \
     return MORE; \
 } while(0)
 
@@ -60,9 +60,10 @@ static enum result_of_hand_chr handl_and(parser *p);
 static enum result_of_hand_chr handl_quot(parser *p);
 static enum result_of_hand_chr handl_skip_c(parser *p);
 static enum result_of_hand_chr handl_end_of_situation(parser *p, int is_EOF);
-static enum result_of_hand_chr handl_regular_c(parser *p);
+static enum result_of_hand_chr handl_regular_c(parser *p, int c);
 static enum result_of_hand_chr handl_semicolon(parser *p);
 static enum result_of_hand_chr handl_brackets(parser *p, char bracket);
+static enum result_of_hand_chr handl_or(parser *p);
 
 parser *parser_new(void)
 {
@@ -200,6 +201,16 @@ void parser_dispose(parser *p)
 
 static enum result_of_hand_chr handling_char(parser *p, int c)
 {
+    if (p->fd_swap) {
+        if (c == ' ') { 
+            int chr;
+            SKIP_SPACES(chr, stdin);
+            c = chr;
+            if (c == '>')
+                return ERROR;
+        }
+    }
+
     if (p->in_quot && c != EOF && c != '\n')
         PUSH_AND_RETURN_MORE(p->cur_word, c);
 
@@ -217,7 +228,7 @@ static enum result_of_hand_chr handling_char(parser *p, int c)
     case ' ':  return EXIT;
     case '\n': return handl_end_of_situation(p, 0);
     case EOF:  return handl_end_of_situation(p, EOF);
-    default:   return handl_regular_c(p);
+    default:   return handl_regular_c(p, c);
     }
 }
 
@@ -258,7 +269,7 @@ static void reset_line(parser *p)
         p->is_eof = 1;
 }
 
-static enum result_of_hand_chr handl_in(parser *p);
+static enum result_of_hand_chr handl_in(parser *p)
 {
     if (p->fd_swap || p->fd_read ) {
         p->fd_chr_err = 1;
@@ -270,7 +281,7 @@ static enum result_of_hand_chr handl_in(parser *p);
     }
 }
 
-static enum result_of_hand_chr handl_out(parser *p);
+static enum result_of_hand_chr handl_out(parser *p)
 {
     if (p->fd_read)
         return ERROR;
@@ -288,7 +299,7 @@ static enum result_of_hand_chr handl_out(parser *p);
     return MORE;
 }
 
-static enum result_of_hand_chr handl_and(parser *p);
+static enum result_of_hand_chr handl_and(parser *p)
 {
     if (p->is_bg_work) {
         p->is_bg_work = 0;
@@ -327,7 +338,7 @@ static enum result_of_hand_chr handl_end_of_situation(parser *p, int is_EOF)
         return ERROR;
     }
 
-    if (is_eof)
+    if (is_EOF)
         p->is_eof = 1;
     else
         p->is_eol = 1;
@@ -335,13 +346,13 @@ static enum result_of_hand_chr handl_end_of_situation(parser *p, int is_EOF)
     return EXIT;
 }
 
-static enum result_of_hand_chr handl_regular_c(parser *p)
+static enum result_of_hand_chr handl_regular_c(parser *p, int c)
 {
     if (p->is_bg_work) {
         p->bg_word_err  = 1;
         p->unexpect_err = '&';
         return ERROR;
-    } else if (p->fd_swap && !p->other_std_fd) {
+    } else if (p->other_std_fd && p->fd_swap) {
         p->fd_chr_err = 1;
         return ERROR;
     }
@@ -356,6 +367,12 @@ static enum result_of_hand_chr handl_semicolon(parser *p)
 }
 
 static enum result_of_hand_chr handl_brackets(parser *p, char bracket)
+{
+    fputs("Feature not implemented yet\n", stderr);
+    return EXIT;
+}
+
+static enum result_of_hand_chr handl_or(parser *p)
 {
     fputs("Feature not implemented yet\n", stderr);
     return EXIT;

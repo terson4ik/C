@@ -41,20 +41,22 @@ int main(void)
             }
             if (remap_std_fd) {
                 fd = open(parser_get_file_name_to_fd(p),
-                          convert_fds_to_mode(p), 0666);
+                          convert_fds_to_mode(parser_io_mode(p)), 0666);
                 if (fd == -1) {
                     perror(parser_get_file_name_to_fd(p));
                     free(args);
-                    goto clean_sh
+                    goto clean_sh;
                 }
-                save1fd = dup(convert_fds_to_fd(p));
-                dup2(fd, convert_fds_to_fd(p));
+                save1fd = dup(convert_fds_to_fd(parser_io_mode(p)));
+                dup2(fd, convert_fds_to_fd(parser_io_mode(p)));
                 close(fd);
             }
             shell_run_command(args, parser_in_bg(p));
             free(args);
-            if (remap_std_fd)
-                dup2(save1fd, convert_fds_to_fd(p));
+            if (remap_std_fd) {
+                dup2(save1fd, convert_fds_to_fd(parser_io_mode(p)));
+                close(save1fd);
+            }
         }
 clean_sh:
         parser_reset(p);
