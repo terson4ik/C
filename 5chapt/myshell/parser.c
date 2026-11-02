@@ -4,40 +4,62 @@
 #include "parser.h"
 #include "word_list.h"
 #include "my_string.h"
+#define INIT_BUF_SIZE   255
+
+#define IS_SPACE(c)         ((c) == ' ' || (c) == '\t')
+#define SKIP_SPACES(c, inp) for((c) = getc(inp); IS_SPACE(c); (c) = getc(inp));
+
 
 /* typedef in header */
 struct parser_tag {
     vector *cur_word;
     word_que *w_que;
-    char *other_std_fd;
 
-    int unexpect_err;
+    char *other_std_fd; /* use in handling '>', '<' etc */
+
+    /* errors */
+    int          unexpect_err; /* save error char value */
+    unsigned int bg_word_err   : 1;
+    unsigned int quot_err      : 1;
+
+    /* output state */
     unsigned int is_eof        : 1;
     unsigned int is_eol        : 1;
     unsigned int is_empy_word  : 1;
-    unsigned int is_and        : 1;
-    unsigned int bg_word_err   : 1;
-    unsigned int quot_err      : 1;
-    unsigned int is_bg_work    : 1;
+
+    /* private fields */
     unsigned int in_quot       : 1;
-    unsigned int need_skip     : 1;
+
+    /* handling '&' */
+    unsigned int is_and        : 1;
+    unsigned int is_bg_work    : 1;
+
+    /* handling '>' ">>" '<' */
     unsigned int fd_append     : 1;
     unsigned int fd_trunc      : 1;
     unsigned int fd_read       : 1;
-    unsigned int fd_block      : 1;
+    unsigned int fd_swap       : 1;
 }; 
-
-#define INIT_BUF_SIZE   4096
-
-#define IS_SPACE(c)         ((c) == ' ' || (c) == '\t')
-#define SKIP_SPACES(c, inp) for((c) = getc(inp); IS_SPACE(c); (c) = getc(inp));
-
-enum result_of_hand_chr { EXIT, MORE, ERROR };
-static enum result_of_hand_chr handling_char(parser *p, int c);
 
 /* EOF not reset */
 static void reset_all(parser *p);
 static void reset_line(parser *p);
+
+enum result_of_hand_chr { EXIT, MORE, ERROR };
+#define PUSH_AND_RETURN_MORE(v, c) do { \
+    vector_push_c(vec, c); \
+    return MORE; \
+} while(0)
+
+static enum result_of_hand_chr handling_char(parser *p, int c);
+
+static enum result_of_hand_chr handl_in(parser *p);
+static enum result_of_hand_chr handl_out(parser *p);
+static enum result_of_hand_chr handl_and(parser *p);
+static enum result_of_hand_chr handl_quot(parser *p);
+static enum result_of_hand_chr handl_skip_c(parser *p);
+static enum result_of_hand_chr handl_end_of_situation(parser *p, int is_EOF);
+static enum result_of_hand_chr handl_regular_c(parser *p);
 
 parser *parser_new(void)
 {
@@ -81,9 +103,9 @@ int parser_get_token(parser *p)
         str = mstrdup(vector_get_str(p->cur_word));
         if (!str)
             return -1;
-        if (p->fd_block)
-            p->other_std_fd =
-        if (word_que_push(p->w_que, str) == -1)
+        else if (p->fd_swap)
+            p->other_std_fd = str;
+        else if (word_que_push(p->w_que, str) == -1)
             return -1;
 
         vector_buf_reset(p->cur_word);
@@ -153,113 +175,49 @@ void parser_dispose(parser *p)
     free(p);
 }
 
+
 static enum result_of_hand_chr handling_char(parser *p, int c)
 {
-    if (p->need_skip) {
-        p->need_skip = 0;
-        vector_push_c(p->cur_word, c);
-        return MORE;
-    }
+    if (p->in_quot && c != EOF && c != '\n')
+        PUSH_AND_RETURN_MORE(p->cur_word, c);
 
     switch (c) {
-    case '\"':
-        p->in_quot = !p->in_quot;
-        p->is_empy_word = 1;
-        return MORE;
-    case '\\':
-        p->need_skip = 1;
-        return MORE;
-    case '\t':
-    case ' ':
-        if (p->in_quot) {
-            vector_push_c(p->cur_word, c);
-            return MORE;
-        } else {
-            return EXIT;
-        }
-    case '\n':
-        p->is_eol = 1;
-        if (p->in_quot) {
-            p->quot_err = 1;
-            return ERROR;
-        }
-        return EXIT;
-    case EOF:
-        p->is_eof = 1;
-        if (p->in_quot) {
-            p->quot_err = 1;
-            return ERROR;
-        }
-        return EXIT;
-    case '&':
-        if (!p->in_quot) {
-            if (p->is_bg_work) {
-                p->is_bg_work = 0;
-                p->is_and = 1;
-            } else if (p->is_and) {
-                p->unexpect_err = '&';
-                return ERROR;
-            } else {
-                p->is_bg_work = 1;
-            }
-        } else {
-            vector_push_c(p->cur_word, c);
-        }
-        return MORE;
-    case '>':
-        if (p->in_quot) {
-            vector_push_c(p->cur_word, c);
-            return MORE;
-        }
-        if (!p->fd_trunc) {
-            p->fd_trunc = 1;
-        } else if (!p->fd_append) {
-            p->fd_append = 1;
-        } else {
-            p->unexpect_err = '>';
-            return ERROR;
-        }
-
-        p->fd_block = 1;
-        return MORE;
-    case '<':
-        if (p->in_quot) {
-            vector_push_c(p->cur_word, c);
-            return MORE;
-        }
-            
-        p->
-        return MORE;
-    default:
-        if (p->is_bg_work) {
-            p->bg_word_err = 1;
-            p->unexpect_err = '&';
-            return ERROR;
-        }
-        vector_push_c(p->cur_word, c);
-        return MORE;
+    case '>':  return handl_out(p);
+    case '<':  return handl_in(p);
+    case '&':  return handl_and(p);
+    case '|':  return handl_or(p);
+    case '\"': return handl_quot(p);
+    case '\\': return handl_skip_c(p);
+    case '\n': return handl_end_of_situation(p, 0);
+    case EOF:  return handl_end_of_situation(p, EOF);
+    case '\t': return EXIT;
+    case ' ':  return EXIT;
+    default:   return handl_regular_c(p);
     }
 }
 
 static void reset_all(parser *p)
 {
-    p->in_quot       = 0;
-    p->is_eol        = 0;
-    p->is_empy_word  = 0;
-    p->need_skip     = 0;
-    p->is_bg_work    = 0; 
-    p->is_and        = 0;
     p->bg_word_err   = 0;
     p->quot_err      = 0;
     p->unexpect_err  = 0;
-    p->fd_append     = 0;
-    p->fd_trunc      = 0;
-    p->fd_read       = 0;
-    p->fd_block      = 0;
+
+    p->is_eol        = 0;
+    p->is_empy_word  = 0;
+
+    p->in_quot       = 0;
+
+    p->is_bg_work    = 0; 
+    p->is_and        = 0;
+
     if (p->other_std_fd) {
         free(p->other_std_fd);
         p->other_std_fd = NULL;
     }
+    p->fd_append     = 0;
+    p->fd_trunc      = 0;
+    p->fd_read       = 0;
+    p->fd_swap       = 0;
 }
 
 static void reset_line(parser *p)
@@ -272,4 +230,89 @@ static void reset_line(parser *p)
         p->is_eol = 1;
     else if (c == EOF)
         p->is_eof = 1;
+}
+
+}
+
+static enum result_of_hand_chr handl_in(parser *p);
+{
+    if (p->fd_swap) {
+
+        if (!p->fd_read) {
+            p->fd_read
+                return MORE;
+}
+
+static enum result_of_hand_chr handl_out(parser *p);
+{
+    if (p->fd_read)
+        return ERROR;
+
+    if (!p->fd_trunc) {
+        p->fd_trunc = 1;
+    } else if (!p->fd_append) {
+        p->fd_append = 1;
+    } else {
+        p->unexpect_err = '>';
+        return ERROR;
+    }
+
+    p->fd_swap = 1;
+    return MORE;
+}
+
+static enum result_of_hand_chr handl_and(parser *p);
+{
+    if (p->is_bg_work) {
+        p->is_bg_work = 0;
+        p->is_and = 1;
+    } else if (p->is_and) {
+        p->unexpect_err = '&';
+        return ERROR;
+    } else {
+        p->is_bg_work = 1;
+    }
+    return MORE;
+}
+static enum result_of_hand_chr handl_quot(parser *p)
+{
+    p->in_quot = !p->in_quot;
+    p->is_empy_word = 1;
+    return MORE;
+}
+
+static enum result_of_hand_chr handl_skip_c(parser *p)
+{
+    int c = getchar();
+    if (c != EOF)
+        PUSH_AND_RETURN_MORE(p->cur_word, c);
+    else {
+        p->is_eof = 1;
+        return ERROR;
+    }
+}
+
+static enum result_of_hand_chr handl_end_of_situation(parser *p, int is_EOF)
+{
+    if (p->in_quot) {
+        p->quot_err = 1;
+        return ERROR;
+    }
+
+    if (is_eof)
+        p->is_eof = 1;
+    else
+        p->is_eol = 1;
+
+    return EXIT;
+}
+
+static enum result_of_hand_chr handl_regular_c(parser *p)
+{
+    if (p->is_bg_work) {
+        p->bg_word_err = 1;
+        p->unexpect_err = '&';
+        return ERROR;
+    }
+    PUSH_AND_RETURN_MORE(p->cur_word, c);
 }
