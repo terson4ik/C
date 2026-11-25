@@ -1,0 +1,4 @@
+use next command:
+
+int setrlimit(int resource, const struct *rlimit rlim);
+int getrlimit(int resource, struct *rlimit rlim);
